@@ -105,7 +105,7 @@
       padding: 12px;
       border-radius: 8px;
       font-size: 14px;
-      margin-top: 12px;
+      margin-top: 15px;
       display: none;
       text-align: center;
       font-weight: 600;
@@ -175,16 +175,11 @@
 <body>
 
   <div class="container">
-    <!-- TELA INICIAL / IDENTIFICAÇÃO -->
+    <!-- TELA INICIAL -->
     <div id="screen-start" class="screen active">
       <h1>English Quiz</h1>
       <p style="text-align: center; margin-bottom: 20px; color: #6B7280;">Complete com <i>am</i>, <i>is</i> ou <i>are</i></p>
       
-      <div class="form-group">
-        <label for="student-name">Nome Completo:</label>
-        <input type="text" id="student-name" placeholder="Digite seu nome conforme a chamada..." autocomplete="off" />
-      </div>
-
       <div class="form-group">
         <label for="student-turma">Turma:</label>
         <select id="student-turma">
@@ -194,7 +189,13 @@
         </select>
       </div>
 
-      <button id="btn-start" type="button">Iniciar Quiz</button>
+      <div class="form-group">
+        <label for="student-name">Nome Completo:</label>
+        <input type="text" id="student-name" placeholder="Selecione a turma e digite seu nome..." autocomplete="off" list="students-list" />
+        <datalist id="students-list"></datalist>
+      </div>
+
+      <button id="btn-start" type="button" onclick="handleStartQuiz()">Iniciar Quiz</button>
       
       <div id="name-error" class="error-msg"></div>
     </div>
@@ -211,9 +212,9 @@
       <div class="options" id="options-container"></div>
     </div>
 
-    <!-- TELA DE RESULTADO & RANKING -->
+    <!-- TELA DE RESULTADO & RANKING NA NUVEM -->
     <div id="screen-ranking" class="screen">
-      <h2>Top 10 Ranking</h2>
+      <h2>Top 10 Ranking (Nuvem)</h2>
       <p id="user-result-summary" style="text-align: center; margin-bottom: 15px; font-weight: 500;"></p>
       
       <table>
@@ -227,20 +228,20 @@
           </tr>
         </thead>
         <tbody id="ranking-body">
-          <tr><td colspan="5" style="text-align: center;">Carregando ranking...</td></tr>
+          <tr><td colspan="5" style="text-align: center;">Carregando ranking da nuvem...</td></tr>
         </tbody>
       </table>
 
-      <button id="btn-restart" style="margin-top: 20px;">Fazer Novamente</button>
+      <button id="btn-restart" onclick="showScreen('screen-start')" style="margin-top: 20px;">Fazer Novamente</button>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // CONFIGURAÇÃO DO SUPABASE
+    // 1. CREDENCIAIS DO SUPABASE (COLE AQUI)
     // ==========================================
-    const SUPABASE_URL = "SUA_SUPABASE_URL_AQUI";
-    const SUPABASE_KEY = "SUA_SUPABASE_ANON_KEY_AQUI";
+    const SUPABASE_URL = https://ufdklgbmrsjjikrtcass.supabase.co;
+    const SUPABASE_KEY = sb_publishable_-84z_EVg00oVgD6g8P3XFw_yf0Czqey;
     
     let db = null;
     if (typeof supabase !== 'undefined' && SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI") {
@@ -248,66 +249,30 @@
     }
 
     // ==========================================
-    // PAUTA OFICIAL DE ALUNOS (LIMPA)
+    // 2. PAUTA OFICIAL DE ALUNOS
     // ==========================================
     const roster = {
       "MICKEY": [
-        "ANTONIO BITTENCOURT NETO",
-        "DAVI SYDHARTA DEDA",
-        "EDGARD MENEZES SILVA NETO",
-        "ESTHER TRINDADE MOTA",
-        "FILIPE DANTAS DE ANDRADE GOIS",
-        "HELENA OLIVEIRA DE MELO",
-        "ISABELLY VITORIA CONCEICAO ARAGAO",
-        "ISADORA BARBOSA SANTOS CRUZ",
-        "JOAO GABRIEL NASCIMENTO SIQUEIRA",
-        "JOSE DANILO FARIAS SANTANA",
-        "JOSE PAIVA DO NASCIMENTO NETO",
-        "KLARA SOFIA DE OLIVEIRA SANTOS",
-        "LAURA ANDRADE DE OLIVEIRA FERREIRA",
-        "LAURA SOARES CARMELO",
-        "LETICIA PINHEIRO CABRAL",
-        "LIVIA VITORIA DE SOUSA ANDRADE",
-        "LUCAS ALVES DE SOUZA",
-        "LUCAS BARRETO SIQUEIRA",
-        "LUIZA MELO MATOS ANDRADE",
-        "MARIA ANTONIA CAVALCANTE DE HOLLANDA",
-        "MARIA LUISA COSTA BUARQUE",
-        "MARIA RITA MENDONÇA PASSOS",
-        "MARINA ALMEIDA DIAS",
-        "PEDRO MIGUEL OLIVEIRA LUCENA",
-        "RENATA MONTEIRO CARDOSO LESSA DE CARVALHO LEITE",
-        "VITOR FARNESE ANDRADE",
-        "YASMIN CATHERINE NUNES CARREGOSA"
+        "ANTONIO BITTENCOURT NETO", "DAVI SYDHARTA DEDA", "EDGARD MENEZES SILVA NETO",
+        "ESTHER TRINDADE MOTA", "FILIPE DANTAS DE ANDRADE GOIS", "HELENA OLIVEIRA DE MELO",
+        "ISABELLY VITORIA CONCEICAO ARAGAO", "ISADORA BARBOSA SANTOS CRUZ", "JOAO GABRIEL NASCIMENTO SIQUEIRA",
+        "JOSE DANILO FARIAS SANTANA", "JOSE PAIVA DO NASCIMENTO NETO", "KLARA SOFIA DE OLIVEIRA SANTOS",
+        "LAURA ANDRADE DE OLIVEIRA FERREIRA", "LAURA SOARES CARMELO", "LETICIA PINHEIRO CABRAL",
+        "LIVIA VITORIA DE SOUSA ANDRADE", "LUCAS ALVES DE SOUZA", "LUCAS BARRETO SIQUEIRA",
+        "LUIZA MELO MATOS ANDRADE", "MARIA ANTONIA CAVALCANTE DE HOLLANDA", "MARIA LUISA COSTA BUARQUE",
+        "MARIA RITA MENDONÇA PASSOS", "MARINA ALMEIDA DIAS", "PEDRO MIGUEL OLIVEIRA LUCENA",
+        "RENATA MONTEIRO CARDOSO LESSA DE CARVALHO LEITE", "VITOR FARNESE ANDRADE", "YASMIN CATHERINE NUNES CARREGOSA"
       ],
       "MINNIE": [
-        "ANA JÚLIA MARQUES DOREA",
-        "ANA LUIZA SANTOS PASSOS",
-        "ARTHUR LESSA SOUZA",
-        "AYLA VALENTINA ARIMATEIA OLIVEIRA",
-        "CAIO FILIPE VIEIRA LEMOS",
-        "DAVI MACIEL ALMEIDA GUIMARÃES",
-        "EMILLY DAMASCENO COLACO PINTO",
-        "ENRICO FERNANDES SILVEIRA ARAGÃO",
-        "GABRIEL PRADO SILVA",
-        "GUSTAVO BRIANT ARIMATEA ROCHA",
-        "HELENA AZEVEDO VASCONCELOS TEIXEIRA",
-        "HELENA DE OLIVEIRA GONÇALVES MONTEIRO",
-        "LARA LOPES BRANDAO",
-        "LAURA ALMEIDA MENDONÇA",
-        "LAURA BARBOSA DE SANTANA",
-        "LEONARDO OLIVEIRA GONÇALVES GOUVEIA",
-        "LETICIA SOBRAL NASCIMENTO",
-        "LUCAS GUILHERME ARAUJO REIS",
-        "LUÍS NATAN SOARES SANTOS",
-        "LUIZ HENRIQUE NASCIMENTO SOARES",
-        "MARIA CECÍLIA ARCE CAMPOS",
-        "MARIA CECILIA ARQUIMEDES SOARES CHAGAS",
-        "MARIA LAURA SILVA CORREIA",
-        "MARIA LUIZA DE OLIVEIRA COSTA",
-        "MELISSA LIMA SANTOS FERREIRA",
-        "OTTO LOPES CRUZ DE CARVALHO ANDRADE",
-        "ROSA HELENA SOARES ALVES SANTOS"
+        "ANA JÚLIA MARQUES DOREA", "ANA LUIZA SANTOS PASSOS", "ARTHUR LESSA SOUZA",
+        "AYLA VALENTINA ARIMATEIA OLIVEIRA", "CAIO FILIPE VIEIRA LEMOS", "DAVI MACIEL ALMEIDA GUIMARÃES",
+        "EMILLY DAMASCENO COLACO PINTO", "ENRICO FERNANDES SILVEIRA ARAGÃO", "GABRIEL PRADO SILVA",
+        "GUSTAVO BRIANT ARIMATEA ROCHA", "HELENA AZEVEDO VASCONCELOS TEIXEIRA", "HELENA DE OLIVEIRA GONÇALVES MONTEIRO",
+        "LARA LOPES BRANDAO", "LAURA ALMEIDA MENDONÇA", "LAURA BARBOSA DE SANTANA",
+        "LEONARDO OLIVEIRA GONÇALVES GOUVEIA", "LETICIA SOBRAL NASCIMENTO", "LUCAS GUILHERME ARAUJO REIS",
+        "LUÍS NATAN SOARES SANTOS", "LUIZ HENRIQUE NASCIMENTO SOARES", "MARIA CECÍLIA ARCE CAMPOS",
+        "MARIA CECILIA ARQUIMEDES SOARES CHAGAS", "MARIA LAURA SILVA CORREIA", "MARIA LUIZA DE OLIVEIRA COSTA",
+        "MELISSA LIMA SANTOS FERREIRA", "OTTO LOPES CRUZ DE CARVALHO ANDRADE", "ROSA HELENA SOARES ALVES SANTOS"
       ]
     };
 
@@ -331,100 +296,5 @@
     let totalSeconds = 0;
 
     function normalizeText(text) {
-      return text
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toUpperCase()
-        .trim()
-        .replace(/\s+/g, ' ');
-    }
-
-    // SUGESTÕES AUTOMÁTICAS AO DIGITAR
-    document.getElementById('student-turma').addEventListener('change', (e) => {
-      const selectedTurma = e.target.value;
-      let datalist = document.getElementById('students-list');
-      
-      if (!datalist) {
-        datalist = document.createElement('datalist');
-        datalist.id = 'students-list';
-        document.body.appendChild(datalist);
-        document.getElementById('student-name').setAttribute('list', 'students-list');
-      }
-      
-      datalist.innerHTML = '';
-      if (roster[selectedTurma]) {
-        roster[selectedTurma].forEach(name => {
-          const option = document.createElement('option');
-          option.value = name;
-          datalist.appendChild(option);
-        });
-      }
-    });
-
-    function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
-    }
-
-    // AÇÃO DO BOTÃO INICIAR QUIZ
-    document.getElementById('btn-start').addEventListener('click', function() {
-      const nameInput = document.getElementById('student-name').value;
-      const turmaInput = document.getElementById('student-turma').value;
-      const errorMsg = document.getElementById('name-error');
-
-      errorMsg.style.display = 'none';
-
-      if (!turmaInput) {
-        errorMsg.innerText = "⚠️ Por favor, selecione a sua turma antes de continuar.";
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      const normalizedInput = normalizeText(nameInput);
-      if (!normalizedInput || normalizedInput.length < 3) {
-        errorMsg.innerText = "⚠️ Nome inválido! Digite seu nome completo conforme a chamada.";
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      const classList = roster[turmaInput] || [];
-      
-      // 1. Busca Exata
-      let match = classList.find(student => normalizeText(student) === normalizedInput);
-
-      // 2. Busca Flexível (palavras do nome)
-      if (!match) {
-        const inputWords = normalizedInput.split(' ');
-        match = classList.find(student => {
-          const normStudent = normalizeText(student);
-          return inputWords.every(word => normStudent.includes(word));
-        });
-      }
-
-      // 3. Tolerância a pequenos erros de digitação nos sobrenomes
-      if (!match && normalizedInput.split(' ').length >= 2) {
-        const inputWords = normalizedInput.split(' ');
-        const surnameMatch = inputWords.slice(1).join(' ');
-        match = classList.find(student => normalizeText(student).includes(surnameMatch));
-      }
-
-      if (!match) {
-        errorMsg.innerText = "⚠️ Nome não encontrado na chamada desta turma. Por favor, digite seu nome completo corretamente ou selecione da lista.";
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      currentUser = { name: match, turma: turmaInput };
-      startQuiz();
-    });
-
-    function startQuiz() {
-      currentQuestionIndex = 0;
-      score = 0;
-      totalSeconds = 0;
-
-      showScreen('screen-quiz');
-      
-      timerInterval = setInterval(() => {
-        totalSeconds++;
-        document.getElementById
+      return (text || "")
+        .normalize("
