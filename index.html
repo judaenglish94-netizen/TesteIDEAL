@@ -67,7 +67,7 @@
       font-weight: 600;
     }
 
-    input, select {
+    select, button {
       width: 100%;
       padding: 12px;
       border: 2px solid #E5E7EB;
@@ -77,21 +77,18 @@
       transition: border-color 0.2s;
     }
 
-    input:focus, select:focus {
+    select:focus {
       border-color: var(--primary);
     }
 
     button {
-      width: 100%;
       background-color: var(--primary);
       color: white;
       border: none;
       padding: 14px;
-      border-radius: 8px;
-      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.2s;
+      margin-top: 10px;
     }
 
     button:hover {
@@ -182,7 +179,7 @@
       
       <div class="form-group">
         <label for="student-turma">Turma:</label>
-        <select id="student-turma">
+        <select id="student-turma" onchange="updateStudentOptions()">
           <option value="">Selecione a sua turma...</option>
           <option value="MICKEY">6º Ano - MICKEY (Manhã)</option>
           <option value="MINNIE">6º Ano - MINNIE (Manhã)</option>
@@ -190,12 +187,13 @@
       </div>
 
       <div class="form-group">
-        <label for="student-name">Nome Completo:</label>
-        <input type="text" id="student-name" placeholder="Selecione a turma e digite seu nome..." autocomplete="off" list="students-list" />
-        <datalist id="students-list"></datalist>
+        <label for="student-name">Nome do Aluno:</label>
+        <select id="student-name">
+          <option value="">Primeiro selecione a turma...</option>
+        </select>
       </div>
 
-      <button id="btn-start" type="button" onclick="handleStartQuiz()">Iniciar Quiz</button>
+      <button id="btn-start" type="button" onclick="startQuiz()">Iniciar Quiz</button>
       
       <div id="name-error" class="error-msg"></div>
     </div>
@@ -212,9 +210,9 @@
       <div class="options" id="options-container"></div>
     </div>
 
-    <!-- TELA DE RESULTADO & RANKING NA NUVEM -->
+    <!-- TELA DE RESULTADO & RANKING -->
     <div id="screen-ranking" class="screen">
-      <h2>Top 10 Ranking (Nuvem)</h2>
+      <h2>Top 10 Ranking</h2>
       <p id="user-result-summary" style="text-align: center; margin-bottom: 15px; font-weight: 500;"></p>
       
       <table>
@@ -228,24 +226,28 @@
           </tr>
         </thead>
         <tbody id="ranking-body">
-          <tr><td colspan="5" style="text-align: center;">Carregando ranking da nuvem...</td></tr>
+          <tr><td colspan="5" style="text-align: center;">Carregando ranking...</td></tr>
         </tbody>
       </table>
 
-      <button id="btn-restart" onclick="showScreen('screen-start')" style="margin-top: 20px;">Fazer Novamente</button>
+      <button id="btn-restart" onclick="resetApp()" style="margin-top: 20px;">Fazer Novamente</button>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // 1. CREDENCIAIS DO SUPABASE (COLE AQUI)
+    // 1. CREDENCIAIS DO SUPABASE (Substitua aqui)
     // ==========================================
     const SUPABASE_URL = https://ufdklgbmrsjjikrtcass.supabase.co;
     const SUPABASE_KEY = sb_publishable_-84z_EVg00oVgD6g8P3XFw_yf0Czqey;
     
     let db = null;
-    if (typeof supabase !== 'undefined' && SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI") {
-      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    try {
+      if (typeof window.supabase !== 'undefined' && SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI") {
+        db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      }
+    } catch (e) {
+      console.warn("Supabase não inicializado:", e);
     }
 
     // ==========================================
@@ -295,6 +297,190 @@
     let timerInterval = null;
     let totalSeconds = 0;
 
-    function normalizeText(text) {
-      return (text || "")
-        .normalize("
+    // PREENCHE O SELECT DE NOMES AO ESCOLHER A TURMA
+    function updateStudentOptions() {
+      const turmaSelect = document.getElementById('student-turma');
+      const nameSelect = document.getElementById('student-name');
+      const selectedTurma = turmaSelect.value;
+
+      nameSelect.innerHTML = '';
+
+      if (!selectedTurma || !roster[selectedTurma]) {
+        nameSelect.innerHTML = '<option value="">Primeiro selecione a turma...</option>';
+        return;
+      }
+
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.innerText = 'Selecione o seu nome na lista...';
+      nameSelect.appendChild(defaultOpt);
+
+      roster[selectedTurma].forEach(studentName => {
+        const opt = document.createElement('option');
+        opt.value = studentName;
+        opt.innerText = studentName;
+        nameSelect.appendChild(opt);
+      });
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // INICIAR O QUIZ
+    function startQuiz() {
+      const turmaInput = document.getElementById('student-turma').value;
+      const nameInput = document.getElementById('student-name').value;
+      const errorMsg = document.getElementById('name-error');
+
+      errorMsg.style.display = 'none';
+
+      if (!turmaInput) {
+        errorMsg.innerText = "Por favor, selecione a sua turma antes de continuar.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (!nameInput) {
+        errorMsg.innerText = "Por favor, selecione o seu nome na lista da turma.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      currentUser = { name: nameInput, turma: turmaInput };
+      currentQuestionIndex = 0;
+      score = 0;
+      totalSeconds = 0;
+
+      showScreen('screen-quiz');
+      
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        totalSeconds++;
+        document.getElementById('timer-display').innerText = `Tempo: ${totalSeconds}s`;
+      }, 1000);
+
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const q = quizQuestions[currentQuestionIndex];
+      document.getElementById('question-tracker').innerText = `Questão ${currentQuestionIndex + 1}/${quizQuestions.length}`;
+      document.getElementById('question-text').innerText = q.prompt;
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(opt);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function selectOption(selected) {
+      if (selected === quizQuestions[currentQuestionIndex].answer) {
+        score++;
+      }
+
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex < quizQuestions.length) {
+        loadQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    async function finishQuiz() {
+      clearInterval(timerInterval);
+
+      showScreen('screen-ranking');
+      document.getElementById('user-result-summary').innerText = 
+        `Parabéns, ${currentUser.name}! Você acertou ${score} de ${quizQuestions.length} em ${totalSeconds} segundos.`;
+
+      if (db) {
+        try {
+          await db.from('ranking').insert([
+            { 
+              student_name: currentUser.name, 
+              turma: currentUser.turma, 
+              score: score, 
+              time_seconds: totalSeconds 
+            }
+          ]);
+        } catch (err) {
+          console.error("Erro ao gravar no Supabase:", err);
+        }
+      }
+
+      fetchRanking();
+    }
+
+    async function fetchRanking() {
+      const tbody = document.getElementById('ranking-body');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Carregando ranking...</td></tr>';
+
+      if (!db) {
+        tbody.innerHTML = `
+          <tr class="highlight">
+            <td>1º</td>
+            <td>${currentUser.name}</td>
+            <td>${currentUser.turma}</td>
+            <td>${score}/10</td>
+            <td>${totalSeconds}s</td>
+          </tr>
+          <tr>
+            <td colspan="5" style="text-align: center; color: #6B7280; font-size: 12px; padding-top: 10px;">
+              (Insira as chaves do Supabase no código para sincronizar os resultados de todos os alunos em tempo real)
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      try {
+        const { data, error } = await db
+          .from('ranking')
+          .select('*')
+          .order('score', { ascending: false })
+          .order('time_seconds', { ascending: true })
+          .limit(10);
+
+        if (error) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Erro ao carregar do Supabase.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = '';
+        data.forEach((row, index) => {
+          const tr = document.createElement('tr');
+          if (row.student_name === currentUser.name && row.score === score && row.time_seconds === totalSeconds) {
+            tr.classList.add('highlight');
+          }
+
+          tr.innerHTML = `
+            <td>${index + 1}º</td>
+            <td>${row.student_name}</td>
+            <td>${row.turma}</td>
+            <td>${row.score}/10</td>
+            <td>${row.time_seconds}s</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Erro de conexão com o banco de dados.</td></tr>';
+      }
+    }
+
+    function resetApp() {
+      document.getElementById('student-turma').value = '';
+      updateStudentOptions();
+      showScreen('screen-start');
+    }
+  </script>
+</body>
+</html>
