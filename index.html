@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>English Quiz - Simple Present</title>
   <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     :root {
       --primary: #4F46E5;
@@ -189,7 +189,7 @@
       <div class="form-group">
         <label for="student-name">Nome do Aluno:</label>
         <select id="student-name">
-          <option value="">Primeiro selecione a turma...</option>
+          <option value="">Primeiro selecione a turma acima...</option>
         </select>
       </div>
 
@@ -236,18 +236,18 @@
 
   <script>
     // ==========================================
-    // 1. CREDENCIAIS DO SUPABASE (Substitua aqui)
+    // 1. CREDENCIAIS DO SUPABASE
     // ==========================================
     const SUPABASE_URL = "https://ufdklgbmrsjjikrtcass.supabase.co";
     const SUPABASE_KEY = "sb_publishable_-84z_EVg00oVgD6g8P3XFw_yf0Czqey";
     
     let db = null;
     try {
-      if (typeof window.supabase !== 'undefined' && SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI") {
+      if (window.supabase && window.supabase.createClient) {
         db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       }
     } catch (e) {
-      console.warn("Supabase não inicializado:", e);
+      console.warn("Aviso na inicialização do Supabase:", e);
     }
 
     // ==========================================
@@ -297,15 +297,15 @@
     let timerInterval = null;
     let totalSeconds = 0;
 
-    // EVENT LISTENER PARA ATUALIZAR OS NOMES
-    document.getElementById('student-turma').addEventListener('change', function() {
-      const selectedTurma = this.value;
+    // PREENCHE A LISTA DE ALUNOS AO MUDAR A TURMA
+    function populateStudents() {
+      const selectedTurma = document.getElementById('student-turma').value;
       const nameSelect = document.getElementById('student-name');
 
       nameSelect.innerHTML = '';
 
       if (!selectedTurma || !roster[selectedTurma]) {
-        nameSelect.innerHTML = '<option value="">Primeiro selecione a turma...</option>';
+        nameSelect.innerHTML = '<option value="">Primeiro selecione a turma acima...</option>';
         return;
       }
 
@@ -320,14 +320,16 @@
         opt.innerText = studentName;
         nameSelect.appendChild(opt);
       });
-    });
+    }
+
+    document.getElementById('student-turma').addEventListener('change', populateStudents);
 
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
     }
 
-    // INICIAR O QUIZ
+    // BOTÃO INICIAR QUIZ
     document.getElementById('btn-start').addEventListener('click', function() {
       const turmaInput = document.getElementById('student-turma').value;
       const nameInput = document.getElementById('student-name').value;
@@ -472,7 +474,7 @@
 
     document.getElementById('btn-restart').addEventListener('click', function() {
       document.getElementById('student-turma').value = '';
-      document.getElementById('student-name').innerHTML = '<option value="">Primeiro selecione a turma...</option>';
+      document.getElementById('student-name').innerHTML = '<option value="">Primeiro selecione a turma acima...</option>';
       showScreen('screen-start');
     });
   </script>
