@@ -14,7 +14,7 @@
       --card-bg: #FFFFFF;
       --text: #1F2937;
       --error: #EF4444;
-      --success: #10B981;
+      --error-bg: #FEE2E2;
     }
 
     * {
@@ -100,9 +100,15 @@
 
     .error-msg {
       color: var(--error);
+      background-color: var(--error-bg);
+      border: 1px solid var(--error);
+      padding: 12px;
+      border-radius: 8px;
       font-size: 14px;
-      margin-top: 8px;
+      margin-top: 12px;
       display: none;
+      text-align: center;
+      font-weight: 600;
     }
 
     /* Quiz Styling */
@@ -169,15 +175,14 @@
 <body>
 
   <div class="container">
-    <!-- TELA INITIAL / IDENTIFICAÇÃO -->
+    <!-- TELA INICIAL / IDENTIFICAÇÃO -->
     <div id="screen-start" class="screen active">
       <h1>English Quiz</h1>
       <p style="text-align: center; margin-bottom: 20px; color: #6B7280;">Complete com <i>am</i>, <i>is</i> ou <i>are</i></p>
       
       <div class="form-group">
         <label for="student-name">Nome Completo:</label>
-        <input type="text" id="student-name" placeholder="Digite seu nome conforme a chamada..." />
-        <div id="name-error" class="error-msg">Nome não encontrado na lista da turma selecionada. Por favor, verifique a grafia e digite seu nome completo.</div>
+        <input type="text" id="student-name" placeholder="Digite seu nome conforme a chamada..." autocomplete="off" />
       </div>
 
       <div class="form-group">
@@ -189,7 +194,9 @@
         </select>
       </div>
 
-      <button id="btn-start">Iniciar Quiz</button>
+      <button id="btn-start" type="button">Iniciar Quiz</button>
+      
+      <div id="name-error" class="error-msg"></div>
     </div>
 
     <!-- TELA DO QUIZ -->
@@ -232,77 +239,78 @@
     // ==========================================
     // CONFIGURAÇÃO DO SUPABASE
     // ==========================================
-    const SUPABASE_URL = https://ufdklgbmrsjjikrtcass.supabase.co;
-    const SUPABASE_KEY = sb_publishable_-84z_EVg00oVgD6g8P3XFw_yf0Czqey;
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = "SUA_SUPABASE_URL_AQUI";
+    const SUPABASE_KEY = "SUA_SUPABASE_ANON_KEY_AQUI";
+    
+    let db = null;
+    if (typeof supabase !== 'undefined' && SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI") {
+      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
 
     // ==========================================
-    // BANCO DE DADOS DE ALUNOS (EXTRAÍDO DOS PDFS)
+    // PAUTA OFICIAL DE ALUNOS (LIMPA)
     // ==========================================
     const roster = {
       "MICKEY": [
-        "ANTONIO BITTENCOURT NETO"[cite: 1],
-        "DAVI SYDHARTA DEDA"[cite: 1],
-        "EDGARD MENEZES SILVA NETO"[cite: 1],
-        "ESTHER TRINDADE MOTA"[cite: 1],
-        "FILIPE DANTAS DE ANDRADE GOIS"[cite: 1],
-        "HELENA OLIVEIRA DE MELO"[cite: 1],
-        "ISABELLY VITORIA CONCEICAO ARAGAO"[cite: 1],
-        "ISADORA BARBOSA SANTOS CRUZ"[cite: 1],
-        "JOAO GABRIEL NASCIMENTO SIQUEIRA"[cite: 1],
-        "JOSE DANILO FARIAS SANTANA"[cite: 1],
-        "JOSE PAIVA DO NASCIMENTO NETO"[cite: 1],
-        "KLARA SOFIA DE OLIVEIRA SANTOS"[cite: 1],
-        "LAURA ANDRADE DE OLIVEIRA FERREIRA"[cite: 1],
-        "LAURA SOARES CARMELO"[cite: 1],
-        "LETICIA PINHEIRO CABRAL"[cite: 1],
-        "LIVIA VITORIA DE SOUSA ANDRADE"[cite: 1],
-        "LUCAS ALVES DE SOUZA"[cite: 1],
-        "LUCAS BARRETO SIQUEIRA"[cite: 1],
-        "LUIZA MELO MATOS ANDRADE"[cite: 1],
-        "MARIA ANTONIA CAVALCANTE DE HOLLANDA"[cite: 1],
-        "MARIA LUISA COSTA BUARQUE"[cite: 1],
-        "MARIA RITA MENDONÇA PASSOS"[cite: 1],
-        "MARINA ALMEIDA DIAS"[cite: 1],
-        "PEDRO MIGUEL OLIVEIRA LUCENA"[cite: 1],
-        "RENATA MONTEIRO CARDOSO LESSA DE CARVALHO LEITE"[cite: 1],
-        "VITOR FARNESE ANDRADE"[cite: 1],
-        "YASMIN CATHERINE NUNES CARREGOSA"[cite: 1]
+        "ANTONIO BITTENCOURT NETO",
+        "DAVI SYDHARTA DEDA",
+        "EDGARD MENEZES SILVA NETO",
+        "ESTHER TRINDADE MOTA",
+        "FILIPE DANTAS DE ANDRADE GOIS",
+        "HELENA OLIVEIRA DE MELO",
+        "ISABELLY VITORIA CONCEICAO ARAGAO",
+        "ISADORA BARBOSA SANTOS CRUZ",
+        "JOAO GABRIEL NASCIMENTO SIQUEIRA",
+        "JOSE DANILO FARIAS SANTANA",
+        "JOSE PAIVA DO NASCIMENTO NETO",
+        "KLARA SOFIA DE OLIVEIRA SANTOS",
+        "LAURA ANDRADE DE OLIVEIRA FERREIRA",
+        "LAURA SOARES CARMELO",
+        "LETICIA PINHEIRO CABRAL",
+        "LIVIA VITORIA DE SOUSA ANDRADE",
+        "LUCAS ALVES DE SOUZA",
+        "LUCAS BARRETO SIQUEIRA",
+        "LUIZA MELO MATOS ANDRADE",
+        "MARIA ANTONIA CAVALCANTE DE HOLLANDA",
+        "MARIA LUISA COSTA BUARQUE",
+        "MARIA RITA MENDONÇA PASSOS",
+        "MARINA ALMEIDA DIAS",
+        "PEDRO MIGUEL OLIVEIRA LUCENA",
+        "RENATA MONTEIRO CARDOSO LESSA DE CARVALHO LEITE",
+        "VITOR FARNESE ANDRADE",
+        "YASMIN CATHERINE NUNES CARREGOSA"
       ],
       "MINNIE": [
-        "ANA JÚLIA MARQUES DOREA"[cite: 3],
-        "ANA LUIZA SANTOS PASSOS"[cite: 3],
-        "ARTHUR LESSA SOUZA"[cite: 3],
-        "AYLA VALENTINA ARIMATEIA OLIVEIRA"[cite: 3],
-        "CAIO FILIPE VIEIRA LEMOS"[cite: 3],
-        "DAVI MACIEL ALMEIDA GUIMARÃES"[cite: 3],
-        "EMILLY DAMASCENO COLACO PINTO"[cite: 3],
-        "ENRICO FERNANDES SILVEIRA ARAGÃO"[cite: 3],
-        "GABRIEL PRADO SILVA"[cite: 3],
-        "GUSTAVO BRIANT ARIMATEA ROCHA"[cite: 3],
-        "HELENA AZEVEDO VASCONCELOS TEIXEIRA"[cite: 3],
-        "HELENA DE OLIVEIRA GONÇALVES MONTEIRO"[cite: 3],
-        "LARA LOPES BRANDAO"[cite: 3],
-        "LAURA ALMEIDA MENDONÇA"[cite: 3],
-        "LAURA BARBOSA DE SANTANA"[cite: 3],
-        "LEONARDO OLIVEIRA GONÇALVES GOUVEIA"[cite: 3],
-        "LETICIA SOBRAL NASCIMENTO"[cite: 3],
-        "LUCAS GUILHERME ARAUJO REIS"[cite: 3],
-        "LUÍS NATAN SOARES SANTOS"[cite: 3],
-        "LUIZ HENRIQUE NASCIMENTO SOARES"[cite: 3],
-        "MARIA CECÍLIA ARCE CAMPOS"[cite: 3],
-        "MARIA CECILIA ARQUIMEDES SOARES CHAGAS"[cite: 3],
-        "MARIA LAURA SILVA CORREIA"[cite: 3],
-        "MARIA LUIZA DE OLIVEIRA COSTA"[cite: 3],
-        "MELISSA LIMA SANTOS FERREIRA"[cite: 3],
-        "OTTO LOPES CRUZ DE CARVALHO ANDRADE"[cite: 3],
-        "ROSA HELENA SOARES ALVES SANTOS"[cite: 3]
+        "ANA JÚLIA MARQUES DOREA",
+        "ANA LUIZA SANTOS PASSOS",
+        "ARTHUR LESSA SOUZA",
+        "AYLA VALENTINA ARIMATEIA OLIVEIRA",
+        "CAIO FILIPE VIEIRA LEMOS",
+        "DAVI MACIEL ALMEIDA GUIMARÃES",
+        "EMILLY DAMASCENO COLACO PINTO",
+        "ENRICO FERNANDES SILVEIRA ARAGÃO",
+        "GABRIEL PRADO SILVA",
+        "GUSTAVO BRIANT ARIMATEA ROCHA",
+        "HELENA AZEVEDO VASCONCELOS TEIXEIRA",
+        "HELENA DE OLIVEIRA GONÇALVES MONTEIRO",
+        "LARA LOPES BRANDAO",
+        "LAURA ALMEIDA MENDONÇA",
+        "LAURA BARBOSA DE SANTANA",
+        "LEONARDO OLIVEIRA GONÇALVES GOUVEIA",
+        "LETICIA SOBRAL NASCIMENTO",
+        "LUCAS GUILHERME ARAUJO REIS",
+        "LUÍS NATAN SOARES SANTOS",
+        "LUIZ HENRIQUE NASCIMENTO SOARES",
+        "MARIA CECÍLIA ARCE CAMPOS",
+        "MARIA CECILIA ARQUIMEDES SOARES CHAGAS",
+        "MARIA LAURA SILVA CORREIA",
+        "MARIA LUIZA DE OLIVEIRA COSTA",
+        "MELISSA LIMA SANTOS FERREIRA",
+        "OTTO LOPES CRUZ DE CARVALHO ANDRADE",
+        "ROSA HELENA SOARES ALVES SANTOS"
       ]
     };
 
-    // ==========================================
-    // PERGUNTAS DO QUIZ (AM / IS / ARE)
-    // ==========================================
     const quizQuestions = [
       { prompt: "1. She ___ a very good student.", options: ["am", "is", "are"], answer: "is" },
       { prompt: "2. I ___ happy to see you today.", options: ["am", "is", "are"], answer: "am" },
@@ -316,14 +324,12 @@
       { prompt: "10. Paul and Mary ___ teachers.", options: ["am", "is", "are"], answer: "are" }
     ];
 
-    // ESTADO DA APLICAÇÃO
     let currentUser = { name: "", turma: "" };
     let currentQuestionIndex = 0;
     let score = 0;
     let timerInterval = null;
     let totalSeconds = 0;
 
-    // HELPER: NORMALIZAÇÃO DE TEXTO (Ignora acentos e maiúsculas/minúsculas)
     function normalizeText(text) {
       return text
         .normalize("NFD")
@@ -333,37 +339,82 @@
         .replace(/\s+/g, ' ');
     }
 
-    // NAVEGAÇÃO ENTRE TELAS
+    // SUGESTÕES AUTOMÁTICAS AO DIGITAR
+    document.getElementById('student-turma').addEventListener('change', (e) => {
+      const selectedTurma = e.target.value;
+      let datalist = document.getElementById('students-list');
+      
+      if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'students-list';
+        document.body.appendChild(datalist);
+        document.getElementById('student-name').setAttribute('list', 'students-list');
+      }
+      
+      datalist.innerHTML = '';
+      if (roster[selectedTurma]) {
+        roster[selectedTurma].forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          datalist.appendChild(option);
+        });
+      }
+    });
+
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
     }
 
-    // VALIDAR E INICIAR QUIZ
-    document.getElementById('btn-start').addEventListener('click', () => {
+    // AÇÃO DO BOTÃO INICIAR QUIZ
+    document.getElementById('btn-start').addEventListener('click', function() {
       const nameInput = document.getElementById('student-name').value;
       const turmaInput = document.getElementById('student-turma').value;
       const errorMsg = document.getElementById('name-error');
 
+      errorMsg.style.display = 'none';
+
       if (!turmaInput) {
-        alert("Por favor, selecione uma turma.");
-        return;
-      }
-
-      const normalizedInput = normalizeText(nameInput);
-      const classList = roster[turmaInput] || [];
-      
-      // Busca correspondência exata desconsiderando acentos e caixas
-      const foundStudent = classList.find(student => normalizeText(student) === normalizedInput);
-
-      if (!foundStudent) {
+        errorMsg.innerText = "⚠️ Por favor, selecione a sua turma antes de continuar.";
         errorMsg.style.display = 'block';
         return;
       }
 
-      errorMsg.style.display = 'none';
-      currentUser = { name: foundStudent, turma: turmaInput };
+      const normalizedInput = normalizeText(nameInput);
+      if (!normalizedInput || normalizedInput.length < 3) {
+        errorMsg.innerText = "⚠️ Nome inválido! Digite seu nome completo conforme a chamada.";
+        errorMsg.style.display = 'block';
+        return;
+      }
 
+      const classList = roster[turmaInput] || [];
+      
+      // 1. Busca Exata
+      let match = classList.find(student => normalizeText(student) === normalizedInput);
+
+      // 2. Busca Flexível (palavras do nome)
+      if (!match) {
+        const inputWords = normalizedInput.split(' ');
+        match = classList.find(student => {
+          const normStudent = normalizeText(student);
+          return inputWords.every(word => normStudent.includes(word));
+        });
+      }
+
+      // 3. Tolerância a pequenos erros de digitação nos sobrenomes
+      if (!match && normalizedInput.split(' ').length >= 2) {
+        const inputWords = normalizedInput.split(' ');
+        const surnameMatch = inputWords.slice(1).join(' ');
+        match = classList.find(student => normalizeText(student).includes(surnameMatch));
+      }
+
+      if (!match) {
+        errorMsg.innerText = "⚠️ Nome não encontrado na chamada desta turma. Por favor, digite seu nome completo corretamente ou selecione da lista.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      currentUser = { name: match, turma: turmaInput };
       startQuiz();
     });
 
@@ -374,117 +425,6 @@
 
       showScreen('screen-quiz');
       
-      // Inicia o Cronômetro
       timerInterval = setInterval(() => {
         totalSeconds++;
-        document.getElementById('timer-display').innerText = `Tempo: ${totalSeconds}s`;
-      }, 1000);
-
-      loadQuestion();
-    }
-
-    function loadQuestion() {
-      const q = quizQuestions[currentQuestionIndex];
-      document.getElementById('question-tracker').innerText = `Questão ${currentQuestionIndex + 1}/${quizQuestions.length}`;
-      document.getElementById('question-text').innerText = q.prompt;
-
-      const optionsContainer = document.getElementById('options-container');
-      optionsContainer.innerHTML = '';
-
-      q.options.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = 'option-btn';
-        btn.innerText = opt;
-        btn.onclick = () => selectOption(opt);
-        optionsContainer.appendChild(btn);
-      });
-    }
-
-    function selectOption(selected) {
-      if (selected === quizQuestions[currentQuestionIndex].answer) {
-        score++;
-      }
-
-      currentQuestionIndex++;
-
-      if (currentQuestionIndex < quizQuestions.length) {
-        loadQuestion();
-      } else {
-        finishQuiz();
-      }
-    }
-
-    async function finishQuiz() {
-      clearInterval(timerInterval);
-
-      showScreen('screen-ranking');
-      document.getElementById('user-result-summary').innerText = 
-        `Parabéns, ${currentUser.name}! Você acertou ${score} de ${quizQuestions.length} em ${totalSeconds} segundos.`;
-
-      // Envia os dados para o Supabase
-      try {
-        await db.from('ranking').insert([
-          { 
-            student_name: currentUser.name, 
-            turma: currentUser.turma, 
-            score: score, 
-            time_seconds: totalSeconds 
-          }
-        ]);
-      } catch (err) {
-        console.error("Erro ao salvar no Supabase:", err);
-      }
-
-      // Atualiza e exibe o Ranking
-      fetchRanking();
-    }
-
-    async function fetchRanking() {
-      const tbody = document.getElementById('ranking-body');
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Carregando ranking...</td></tr>';
-
-      // Consulta os dados ordenados: maior pontuação primeiro; em caso de empate, menor tempo
-      const { data, error } = await db
-        .from('ranking')
-        .select('*')
-        .order('score', { ascending: false })
-        .order('time_seconds', { ascending: true })
-        .limit(10);
-
-      if (error) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Erro ao carregar o ranking.</td></tr>';
-        console.error(error);
-        return;
-      }
-
-      tbody.innerHTML = '';
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhuma resposta registrada ainda.</td></tr>';
-        return;
-      }
-
-      data.forEach((row, index) => {
-        const tr = document.createElement('tr');
-        
-        // Destaca se for o resultado da tentativa atual
-        if (row.student_name === currentUser.name && row.score === score && row.time_seconds === totalSeconds) {
-          tr.classList.add('highlight');
-        }
-
-        tr.innerHTML = `
-          <td>${index + 1}º</td>
-          <td>${row.student_name}</td>
-          <td>${row.turma}</td>
-          <td>${row.score}/10</td>
-          <td>${row.time_seconds}s</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    document.getElementById('btn-restart').addEventListener('click', () => {
-      showScreen('screen-start');
-    });
-  </script>
-</body>
-</html>
+        document.getElementById
