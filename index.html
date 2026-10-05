@@ -179,7 +179,7 @@
       
       <div class="form-group">
         <label for="student-turma">Turma:</label>
-        <select id="student-turma" onchange="updateStudentOptions()">
+        <select id="student-turma">
           <option value="">Selecione a sua turma...</option>
           <option value="MICKEY">6º Ano - MICKEY (Manhã)</option>
           <option value="MINNIE">6º Ano - MINNIE (Manhã)</option>
@@ -193,7 +193,7 @@
         </select>
       </div>
 
-      <button id="btn-start" type="button" onclick="startQuiz()">Iniciar Quiz</button>
+      <button id="btn-start" type="button">Iniciar Quiz</button>
       
       <div id="name-error" class="error-msg"></div>
     </div>
@@ -230,7 +230,7 @@
         </tbody>
       </table>
 
-      <button id="btn-restart" onclick="resetApp()" style="margin-top: 20px;">Fazer Novamente</button>
+      <button id="btn-restart" type="button" style="margin-top: 20px;">Fazer Novamente</button>
     </div>
   </div>
 
@@ -297,11 +297,10 @@
     let timerInterval = null;
     let totalSeconds = 0;
 
-    // PREENCHE O SELECT DE NOMES AO ESCOLHER A TURMA
-    function updateStudentOptions() {
-      const turmaSelect = document.getElementById('student-turma');
+    // EVENT LISTENER PARA ATUALIZAR OS NOMES
+    document.getElementById('student-turma').addEventListener('change', function() {
+      const selectedTurma = this.value;
       const nameSelect = document.getElementById('student-name');
-      const selectedTurma = turmaSelect.value;
 
       nameSelect.innerHTML = '';
 
@@ -321,7 +320,7 @@
         opt.innerText = studentName;
         nameSelect.appendChild(opt);
       });
-    }
+    });
 
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -329,7 +328,7 @@
     }
 
     // INICIAR O QUIZ
-    function startQuiz() {
+    document.getElementById('btn-start').addEventListener('click', function() {
       const turmaInput = document.getElementById('student-turma').value;
       const nameInput = document.getElementById('student-name').value;
       const errorMsg = document.getElementById('name-error');
@@ -362,7 +361,7 @@
       }, 1000);
 
       loadQuestion();
-    }
+    });
 
     function loadQuestion() {
       const q = quizQuestions[currentQuestionIndex];
@@ -433,11 +432,6 @@
             <td>${score}/10</td>
             <td>${totalSeconds}s</td>
           </tr>
-          <tr>
-            <td colspan="5" style="text-align: center; color: #6B7280; font-size: 12px; padding-top: 10px;">
-              (Insira as chaves do Supabase no código para sincronizar os resultados de todos os alunos em tempo real)
-            </td>
-          </tr>
         `;
         return;
       }
@@ -476,11 +470,11 @@
       }
     }
 
-    function resetApp() {
+    document.getElementById('btn-restart').addEventListener('click', function() {
       document.getElementById('student-turma').value = '';
-      updateStudentOptions();
+      document.getElementById('student-name').innerHTML = '<option value="">Primeiro selecione a turma...</option>';
       showScreen('screen-start');
-    }
+    });
   </script>
 </body>
 </html>
